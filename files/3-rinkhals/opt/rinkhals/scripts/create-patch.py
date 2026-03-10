@@ -84,6 +84,7 @@ def patch_K3SysUi(binaryPath, modelCode, version):
 
     patchJumpOperand = 'b'
     s1RowRegister = 'r3'
+    s1CaseAlreadySelected = False
 
     if modelCode == 'K2P' and version == '3.1.2.3':
         buttonCallback = k3sysui.symbols['_ZN10MainWindow23AcSettingListBtnReleaseEi']
@@ -183,6 +184,13 @@ def patch_K3SysUi(binaryPath, modelCode, version):
         patchJumpAddress = 0x14a51c
         patchReturnAddress = 0x14a524
         s1RowRegister = 'r1'
+    elif modelCode == 'KS1' and version == '2.7.0.7':
+        buttonCallback = k3sysui.symbols['_ZZN10MainWindow21AcSettingDeviceUiInitEvENKUlRK11QModelIndexE0_clES2_']
+        # In 2.7.0.7 the actual Service Support case body starts at 0x14e870.
+        # The NOPs at 0x14e890 are after the original case-3 page switch.
+        patchJumpAddress = 0x14e870
+        patchReturnAddress = 0x14e89c
+        s1CaseAlreadySelected = True
         
     elif modelCode == 'KS1M' and version == '2.1.6':
         buttonCallback = k3sysui.symbols['_ZZN10MainWindow21AcSettingDeviceUiInitEvENKUlRK11QModelIndexE0_clES2_']
@@ -271,7 +279,7 @@ def patch_K3SysUi(binaryPath, modelCode, version):
     address = address - address % 4
     k3sysui.asm(patchJumpAddress, f'{patchJumpOperand} 0x{address:x}')
     
-    if modelCode == 'KS1' or modelCode == 'KS1M':
+    if (modelCode == 'KS1' or modelCode == 'KS1M') and not s1CaseAlreadySelected:
         # if (row() != 3) return
         k3sysui.asm(address + 0, 'mov r0, r4')
         k3sysui.asm(address + 4, f'cmp {s1RowRegister}, #0x3')
