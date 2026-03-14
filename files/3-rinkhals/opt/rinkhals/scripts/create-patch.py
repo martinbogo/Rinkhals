@@ -141,6 +141,10 @@ def patch_K3SysUi(binaryPath, modelCode, version):
         buttonCallback = k3sysui.symbols['_ZZN10MainWindow19AcSettingPageUiInitEvENKUlvE_clEv']
         patchJumpAddress = 0x103558
         patchReturnAddress = 0x103588
+    elif modelCode == 'K3' and version == '2.4.6.4':
+        buttonCallback = k3sysui.symbols['_ZZN10MainWindow19AcSettingPageUiInitEvENKUlvE_clEv']
+        patchJumpAddress = 0x1076c4
+        patchReturnAddress = 0x1076f4
 
     # KS1 - Settings > General > Service Support (4th button)
     
@@ -580,7 +584,7 @@ def main_file(path, model, version):
 def main_directory(path):
     files = os.listdir(path)
     for file in files:
-        match = re.search('^([a-zA-Z0-9]+)\.(K[A-Z0-9]+)_([0-9.]+)$', file)
+        match = re.search(r'^([a-zA-Z0-9]+)\.(K[A-Z0-9]+)_([0-9.]+)$', file)
         if not match:
             continue
 
@@ -610,7 +614,7 @@ def main():
             model = os.getenv('KOBRA_MODEL_CODE')
             version = os.getenv('KOBRA_VERSION')
 
-            match = re.search('^([a-zA-Z0-9]+)\.(K[A-Z0-9]+)_([0-9.]+)$', os.path.basename(path))
+            match = re.search(r'^([a-zA-Z0-9]+)\.(K[A-Z0-9]+)_([0-9.]+)$', os.path.basename(path))
             if match:
                 model = match.group(2)
                 version = match.group(3)
