@@ -195,6 +195,13 @@ def patch_K3SysUi(binaryPath, modelCode, version):
         patchJumpAddress = 0x14e870
         patchReturnAddress = 0x14e89c
         s1CaseAlreadySelected = True
+    elif modelCode == 'KS1' and version == '2.7.0.9':
+        buttonCallback = k3sysui.symbols['_ZZN10MainWindow21AcSettingDeviceUiInitEvENKUlRK11QModelIndexE0_clES2_']
+        # In 2.7.0.9, case 3 (Service Support) begins at 0x14f5b0.
+        # The switch break target (cleanup/epilog) is at 0x14f674.
+        patchJumpAddress = 0x14f5b0
+        patchReturnAddress = 0x14f674
+        s1CaseAlreadySelected = True
         
     elif modelCode == 'KS1M' and version == '2.1.6':
         buttonCallback = k3sysui.symbols['_ZZN10MainWindow21AcSettingDeviceUiInitEvENKUlRK11QModelIndexE0_clES2_']
