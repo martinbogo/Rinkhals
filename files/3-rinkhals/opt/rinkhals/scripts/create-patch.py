@@ -208,6 +208,11 @@ def patch_K3SysUi(binaryPath, modelCode, version):
         patchJumpAddress = 0x14a514
         patchReturnAddress = 0x14a51c
         s1RowRegister = 'r1'
+    elif modelCode == 'KS1M' and version == '2.6.6':
+        buttonCallback = k3sysui.symbols['_ZZN10MainWindow21AcSettingDeviceUiInitEvENKUlRK11QModelIndexE0_clES2_']
+        patchJumpAddress = 0x14efc0
+        patchReturnAddress = 0x14efec
+        s1CaseAlreadySelected = True
 
     else:
         raise Exception('Unsupported model and version')
