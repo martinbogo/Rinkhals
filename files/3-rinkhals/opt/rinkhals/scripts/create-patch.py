@@ -141,6 +141,18 @@ def patch_K3SysUi(binaryPath, modelCode, version):
         buttonCallback = k3sysui.symbols['_ZZN10MainWindow19AcSettingPageUiInitEvENKUlvE_clEv']
         patchJumpAddress = 0x103558
         patchReturnAddress = 0x103588
+    elif modelCode == 'K3V2' and version == '1.1.2.5':
+        buttonCallback = k3sysui.symbols['_ZZN10MainWindow19AcSettingPageUiInitEvENKUlvE_clEv']
+        # case 4 body starts at 0x1076c4, and the switch break target is 0x107704.
+        # Returning to the epilog avoids accidental fall-through into adjacent case code.
+        patchJumpAddress = 0x1076c4
+        patchReturnAddress = 0x107704
+    elif modelCode == 'K3V2' and version == '1.1.2.7':
+        buttonCallback = k3sysui.symbols['_ZZN10MainWindow19AcSettingPageUiInitEvENKUlvE_clEv']
+        # case 4 body starts at 0x1076ec, and the switch break target is 0x10772c.
+        # Returning to the epilog avoids accidental fall-through into adjacent case code.
+        patchJumpAddress = 0x1076ec
+        patchReturnAddress = 0x10772c
     elif modelCode == 'K3' and version == '2.4.6.4':
         buttonCallback = k3sysui.symbols['_ZZN10MainWindow19AcSettingPageUiInitEvENKUlvE_clEv']
         patchJumpAddress = 0x1076c4
