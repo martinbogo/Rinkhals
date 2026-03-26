@@ -122,6 +122,11 @@ If you want to help Rinkhals and contribute, whether it's code, documentation or
 </a>
 <br /><br />
 
+Current maintainers:
+- **jbatonnet**
+- **martinbogo**
+- **Antitriad**
+  
 Special thanks to those people for providing the base research and helping support for more printers:
 - **utkabobr** (https://github.com/utkabobr/DuckPro-Kobra3)
 - **systemik** (https://github.com/systemik/Kobra3-Firmware)
