@@ -92,6 +92,7 @@ class Kobra:
     # MQTT states
     mqtt_print_report = False
     mqtt_print_error = None
+    mqtt_print_error_code = None
 
     # Cache
     _goklipper_next_check = 0
@@ -242,35 +243,7 @@ class Kobra:
         vibration_compensation = self.get_app_property('40-moonraker', 'mqtt_print_vibration_compensation').lower() == 'true'
         flow_calibration = self.get_app_property('40-moonraker', 'mqtt_print_flow_calibration').lower() == 'true'
 
-        print_request = {
-            'type': 'print',
-            'action': 'start',
-            'msgid': str(uuid.uuid4()),
-            'timestamp': int(time.time() * 1000),
-            'data': {
-                'filename': file,
-                'filepath': '/',
-                'taskid': str(random.randint(0, 1000000)),
-                'task_mode': 1,
-                'filetype': 1,
-                'task_settings': {
-                    'auto_leveling': 1 if auto_leveling else 0,
-                    'vibration_compensation': 1 if vibration_compensation else 0,
-                    'flow_calibration': 1 if flow_calibration else 0
-                }
-            }
-        }
-        
-        print_data = print_request["data"]
-
-        for patcher in self.print_data_patchers:
-            print_data = patcher(print_data)
-
-        print_request["data"] = print_data
-
-        logging.info(f'[Kobra] print data : {json.dumps(print_data)}')
-
-        payload = json.dumps(print_request)
+        max_attempts = 2
         
         # payload = f"""{{
         #     "type": "print",
@@ -289,50 +262,136 @@ class Kobra:
         #     }}
         # }}"""
 
-        self.mqtt_print_report = False
-        self.mqtt_print_error = None
+        for attempt in range(1, max_attempts + 1):
+            print_request = {
+                'type': 'print',
+                'action': 'start',
+                'msgid': str(uuid.uuid4()),
+                'timestamp': int(time.time() * 1000),
+                'data': {
+                    'filename': file,
+                    'filepath': '/',
+                    'taskid': str(random.randint(0, 1000000)),
+                    'task_mode': 1,
+                    'filetype': 1,
+                    'task_settings': {
+                        'auto_leveling': 1 if auto_leveling else 0,
+                        'vibration_compensation': 1 if vibration_compensation else 0,
+                        'flow_calibration': 1 if flow_calibration else 0
+                    }
+                }
+            }
+
+            print_data = print_request["data"]
+
+            for patcher in self.print_data_patchers:
+                print_data = patcher(print_data)
+
+            print_request["data"] = print_data
+
+            logging.info(f'[Kobra] print data : {json.dumps(print_data)}')
+
+            payload = json.dumps(print_request)
+
+            self.mqtt_print_report = False
+            self.mqtt_print_error = None
+            self.mqtt_print_error_code = None
+
+            def mqtt_on_connect(client, userdata, flags, reason_code, properties):
+                client.subscribe(f'anycubic/anycubicCloud/v1/printer/public/{self.KOBRA_MODEL_ID}/{self.KOBRA_DEVICE_ID}/print/report')
+                client.publish(f'anycubic/anycubicCloud/v1/slicer/printer/{self.KOBRA_MODEL_ID}/{self.KOBRA_DEVICE_ID}/print', payload=payload, qos=1)
+
+            def mqtt_on_message(client, userdata, msg):
+                logging.debug(f'Received MQTT print report: {str(msg.payload)}')
+
+                payload = json.loads(msg.payload)
+                state = str(payload['state'])
+                logging.info(f'Received MQTT print state: {state}')
+
+                if state == 'failed' or state == 'stoped': # not 'heating', not 'printing', not 'leveling'
+                    code = payload.get('code')
+                    try:
+                        code = int(code)
+                    except:
+                        pass
+
+                    self.mqtt_print_error_code = code
+                    if code and code == 10107:
+                        message = 'Filament broken. Please load new filament. (code 10107)'
+                    else:
+                        message = str(payload['msg']) + (f' (code {code})' if code else '')
+                    self.mqtt_print_error = message
+
+                self.mqtt_print_report = True
+
+            client = paho.Client(protocol = paho.MQTTv5)
+            client.on_connect = mqtt_on_connect
+            client.on_message = mqtt_on_message
+
+            client.username_pw_set(self.MQTT_USERNAME, self.MQTT_PASSWORD)
+            client.connect('127.0.0.1', 2883)
+
+            timeout = time.time() + 30
+            while not self.mqtt_print_report:
+                if time.time() > timeout:
+                    self.mqtt_print_error = f'Timeout while trying to print {file}'
+                    break
+                client.loop(timeout = 0.25)
+
+            client.disconnect()
+
+            if self.mqtt_print_error and self.mqtt_print_error_code == 10101 and attempt < max_attempts:
+                logging.warning('[Kobra] Print start rejected with code 10101 (task still active). Retrying once...')
+                time.sleep(1.5)
+                continue
+
+            if self.mqtt_print_error:
+                message = f'Error while trying to print: {str(self.mqtt_print_error)}'
+                logging.error(message)
+                raise self.server.error(message)
+
+            return
+
+    def mqtt_stop_print(self):
+        logging.info('Trying to cancel current print using MQTT...')
+
+        payload = json.dumps({
+            'type': 'print',
+            'action': 'stop',
+            'msgid': str(uuid.uuid4()),
+            'timestamp': int(time.time() * 1000),
+            'data': {
+                'taskid': '-1'
+            }
+        })
+
+        mqtt_publish_done = False
 
         def mqtt_on_connect(client, userdata, flags, reason_code, properties):
-            client.subscribe(f'anycubic/anycubicCloud/v1/printer/public/{self.KOBRA_MODEL_ID}/{self.KOBRA_DEVICE_ID}/print/report')
-            client.publish(f'anycubic/anycubicCloud/v1/slicer/printer/{self.KOBRA_MODEL_ID}/{self.KOBRA_DEVICE_ID}/print', payload=payload, qos=1)
-
-        def mqtt_on_message(client, userdata, msg):
-            logging.debug(f'Received MQTT print report: {str(msg.payload)}')
-
-            payload = json.loads(msg.payload)
-            state = str(payload['state'])
-            logging.info(f'Received MQTT print state: {state}')
-
-            if state == 'failed' or state == 'stoped': # not 'heating', not 'printing', not 'leveling'
-                code = payload.get('code')
-                if code and code == 10107:
-                    message = 'Filament broken. Please load new filament. (code 10107)'
-                else:
-                    message = str(payload['msg']) + (f' (code {code})' if code else '')
-                self.mqtt_print_error = message
-
-            self.mqtt_print_report = True
+            nonlocal mqtt_publish_done
+            client.publish(
+                f'anycubic/anycubicCloud/v1/slicer/printer/{self.KOBRA_MODEL_ID}/{self.KOBRA_DEVICE_ID}/print',
+                payload=payload,
+                qos=1
+            )
+            mqtt_publish_done = True
 
         client = paho.Client(protocol = paho.MQTTv5)
         client.on_connect = mqtt_on_connect
-        client.on_message = mqtt_on_message
 
         client.username_pw_set(self.MQTT_USERNAME, self.MQTT_PASSWORD)
         client.connect('127.0.0.1', 2883)
 
-        timeout = time.time() + 30
-        while not self.mqtt_print_report:
+        timeout = time.time() + 5
+        while not mqtt_publish_done:
             if time.time() > timeout:
-                self.mqtt_print_error = f'Timeout while trying to print {file}'
                 break
             client.loop(timeout = 0.25)
 
         client.disconnect()
 
-        if self.mqtt_print_error:
-            message = f'Error while trying to print: {str(self.mqtt_print_error)}'
-            logging.error(message)
-            raise self.server.error(message)
+        if not mqtt_publish_done:
+            raise self.server.error('Timeout while trying to cancel print over MQTT')
 
 
     def patch_status(self, status):
@@ -644,8 +703,18 @@ class Kobra:
 
             return await delegate_run_gcode()
 
+        async def handle_gcode_cancel_print(args: dict, delegate_run_gcode):
+            logging.info(f'[Kobra] Cancel print requested: {args}')
+            if self.is_goklipper_running() and self.is_using_mqtt():
+                logging.info('[Kobra] MQTT cancel print')
+                self.mqtt_stop_print()
+                return None
+
+            return await delegate_run_gcode()
+
         logging.info('> Send prints to MQTT...')
         self.register_gcode_handler('SDCARD_PRINT_FILE', handle_gcode_print_file)
+        self.register_gcode_handler('CANCEL_PRINT', handle_gcode_cancel_print)
 
     def patch_bed_mesh(self):
         from .klippy_connection import KlippyConnection
