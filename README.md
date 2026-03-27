@@ -27,6 +27,14 @@ Here are the suported printers and firmwares with latest Rinkhals release:
 | Kobra 3 V2 (+ combo) | `1.1.0.1` `1.1.0.4` |
 | Kobra S1 Max (+ combo) | `2.1.6` |
 
+## Kobra X status
+
+Some Kobra X firmware packages are publicly available and the SWU password has also been recovered.
+
+However, Anycubic moved from the K3 software base (GoKlipper) to a K4 software base using a C++ Klipper port. Because of this, Kobra X support is not expected to be a simple port of the current Rinkhals stack.
+
+In addition, the SWU update flow requires a trusted certificate for package acceptance. Until a reliable bypass is discovered, SWU-based firmware injection similar to Rinkhals is not currently feasible on Kobra X.
+
 In case you're wondering this project is named after rinkhals, a sub-species of Cobras ... Kobra ... Rinkhals 👏
 
 You can join the Rinkhals community on Discord: https://discord.gg/3mrANjpNJC
@@ -42,7 +50,7 @@ Since people have been asking, I accept donations but please remember that I wor
 ## Rinkhals installation
 
 > [!WARNING]
-> **Make sure you're confident tweaking your printer and you understand what you're doing. I'm not responsible if you brick your printer (even if there's some [documentation](https://jbatonnet.github.io/Rinkhals/Kobra%20Printers/recover-boot-issues/) about that)**
+> **Make sure you're confident tweaking your printer and you understand what you're doing. I'm not responsible if you brick your printer (even if there's some [documentation](https://jbatonnet.github.io/Rinkhals/printers/recover-boot-issues/)) about that)**
 
 > [!CAUTION]
 > Many users want to change their Klipper printer configuration (the printer.cfg file). I strongly advise not modifying the stock printer configuration. Rinkhals offers additional protection you don't have while modifying directly your printer configuration. **I won't offer any support** and **your printer might not work properly or not boot anymore**. Check the documentation for more information: [Printer configuration](https://jbatonnet.github.io/Rinkhals/Rinkhals/printer-configuration/)
