@@ -564,6 +564,39 @@ class MmuAceController:
         # Removes expired temperature cache entries to prevent slow memory leak
         asyncio.create_task(self._periodic_cache_cleanup())
 
+    @staticmethod
+    def _is_no_ace_error(error: Exception) -> bool:
+        message = str(error).lower()
+        return (
+            "filament hub not exist" in message
+            or ("filament_hub" in message and "not exist" in message)
+            or "11503" in message
+        )
+
+    @staticmethod
+    def _has_filament_hub_data(result: Any) -> bool:
+        if not isinstance(result, dict):
+            return False
+
+        filament_hub = result.get("filament_hub")
+        if not isinstance(filament_hub, dict):
+            return False
+
+        return isinstance(filament_hub.get("filament_hubs"), list)
+
+    def _disable_ace(self, reason: str):
+        if self.ace.enabled:
+            logging.warning(f"ACE disabled: {reason}")
+        else:
+            logging.info(f"ACE remains disabled: {reason}")
+
+        self.ace.enabled = False
+        self.ace.units = [MmuAceUnit(0, "ACE 1")]
+        self.ace.tools = []
+        self.ace.ttg_map = []
+        self._invalidate_gate_cache()
+        self._handle_status_update(force=True)
+
     def _handle_status_update(self, force: bool = False, throttle: bool = False):
         """Send status update notification with debouncing or throttling.
 
@@ -746,15 +779,26 @@ class MmuAceController:
                 # await self._load_mmu_ace_config()
                 klippy_apis: KlippyAPI = self.server.lookup_component("klippy_apis")
                 result = await klippy_apis.query_objects({ "filament_hub": None })
+                if not self._has_filament_hub_data(result):
+                    self._disable_ace("filament_hub object unavailable on this printer")
+                    return
                 success = True
             except Exception as e:
+                if self._is_no_ace_error(e):
+                    self._disable_ace(str(e))
+                    return
                 logging.error(f"Error contacting moonraker: {e}")
                 success = False
             if success:
                 logging.info("Contacted moonraker")
                 break
             logging.warning(f"Moonraker not available. {f'Retrying in {delay} seconds...' if retry > 1 else ''}")
-            await asyncio.sleep(2)
+            await asyncio.sleep(delay)
+
+        if not success:
+            logging.warning("Skipping ACE initialization because filament_hub is unavailable")
+            return
+
         try:
             await self._load_ace()
         except Exception as e:
@@ -762,16 +806,45 @@ class MmuAceController:
 
     async def _load_ace(self):
         await self._load_mmu_ace_config()
+        if not self.ace.enabled:
+            return
+
         await self._subscribe_mmu_ace_status_update()
+        if not self.ace.enabled:
+            return
 
         self._handle_status_update(force=True)
 
     async def _load_mmu_ace_config(self):
-        result = await self.printer.query_objects({ "filament_hub": None })
+        try:
+            result = await self.printer.query_objects({ "filament_hub": None })
+        except Exception as e:
+            if self._is_no_ace_error(e):
+                self._disable_ace(str(e))
+                return
+            raise
+
+        if not self._has_filament_hub_data(result):
+            self._disable_ace("filament_hub config not present in query response")
+            return
+
         logging.debug(f"mmu ace config: {json.dumps(result)}")
 
     async def _subscribe_mmu_ace_status_update(self):
-        result = await self.printer.subscribe_objects({ "filament_hub": None }, self._handle_mmu_ace_status_update)
+        if not self.ace.enabled:
+            return
+
+        try:
+            result = await self.printer.subscribe_objects({ "filament_hub": None }, self._handle_mmu_ace_status_update)
+        except Exception as e:
+            if self._is_no_ace_error(e):
+                self._disable_ace(str(e))
+                return
+            raise
+
+        if not self._has_filament_hub_data(result):
+            self._disable_ace("filament_hub missing from subscription response")
+            return
 
         logging.debug(f"mmu ace status subscribe: {json.dumps(result)}")
 
@@ -2169,6 +2242,10 @@ class MmuAcePatcher:
 
                 # Increment paint_index for the next color in the object
                 paint_index += 1
+
+            if not mapping:
+                logging.info("No ACE gate mapping available, skipping AMS settings injection")
+                return print_data
 
             print_data["ams_settings"] = {
                 "use_ams": True,
