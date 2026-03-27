@@ -217,10 +217,10 @@ mkdir -p /userdata/app/gk/printer_data
 umount -l /userdata/app/gk/printer_data 2> /dev/null
 mount --bind $RINKHALS_HOME/printer_data /userdata/app/gk/printer_data
 
-rm -f /userdata/app/gk/printer_mutable.cfg.bak
-[ -f /userdata/app/gk/printer_mutable.cfg ] && mv /userdata/app/gk/printer_mutable.cfg /userdata/app/gk/printer_mutable.cfg.bak
-[ ! -f $RINKHALS_HOME/printer_data/config/printer_mutable.cfg ] && echo "{}" > $RINKHALS_HOME/printer_data/config/printer_mutable.cfg
-ln -s $RINKHALS_HOME/printer_data/config/printer_mutable.cfg /userdata/app/gk/printer_mutable.cfg
+# Let Anycubic firmware manage printer_mutable.cfg natively in /userdata/app/gk/
+# We just need to expose it to Moonraker and kobra.py
+[ ! -f /userdata/app/gk/printer_mutable.cfg ] && echo "{}" > /userdata/app/gk/printer_mutable.cfg
+ln -sf /userdata/app/gk/printer_mutable.cfg $RINKHALS_HOME/printer_data/config/printer_mutable.cfg
 
 mkdir -p /userdata/app/gk/printer_data/config/default
 umount -l /userdata/app/gk/printer_data/config/default 2> /dev/null
@@ -275,7 +275,9 @@ for TARGET in $TARGETS; do
 done
 
 # Tweak processes priority to avoid MCU timing and more generally priting errors. (https://github.com/jbatonnet/Rinkhals/issues/128)
-nice -n -20 ./gklib -a /tmp/unix_uds1 /userdata/app/gk/printer_data/config/printer.generated.cfg >> $RINKHALS_LOGS/gklib.log 2>&1 &
+rm -f /userdata/app/gk/rinkhals_gklib.cfg
+ln -sf /userdata/app/gk/printer_data/config/printer.generated.cfg /userdata/app/gk/rinkhals_gklib.cfg
+nice -n -20 ./gklib -a /tmp/unix_uds1 rinkhals_gklib.cfg >> $RINKHALS_LOGS/gklib.log 2>&1 &
 chrt -p 89 $(get_by_name ksoftirqd/0)
 
 sleep 2
