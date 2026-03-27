@@ -183,7 +183,14 @@ def patch_K3SysUi(binaryPath, modelCode, version):
         patchJumpAddress = 0x14a51c
         patchReturnAddress = 0x14a524
         s1RowRegister = 'r1'
-        
+    elif modelCode == 'KS1' and (version == '2.7.0.7' or version == '2.7.0.9'):
+        # KS1 2.7.0.x - Settings > Device > 4th item (row=3 in jump table at 0x14f2fc)
+        # case row=3 at 0x14f5b0: ldr/add/ldr QStackedWidget*, mov r1,#3, mov r0,r3, bl setCurrentIndex, b return
+        buttonCallback = k3sysui.symbols['_ZZN10MainWindow21AcSettingDeviceUiInitEvENKUlRK11QModelIndexE0_clES2_']
+        patchJumpAddress = 0x14f5c4
+        patchReturnAddress = 0x14f5cc
+        s1RowRegister = 'r1'
+
     elif modelCode == 'KS1M' and version == '2.1.6':
         buttonCallback = k3sysui.symbols['_ZZN10MainWindow21AcSettingDeviceUiInitEvENKUlRK11QModelIndexE0_clES2_']
         patchJumpAddress = 0x14a514
