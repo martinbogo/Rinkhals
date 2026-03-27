@@ -12,6 +12,14 @@ Welcome to the Rinkhals project documentation!
 Rinkhals is a custom firmware overlay for the Anycubic Kobra series of 3D printers. It supports Kobra 3, Kobra 3 Max, Kobra S1 and some Kobra 2 Pro 3D printers.
 This documentation covers what we know about those printers, what we know about Anycubic software, Rinkhals and some high levels guides to achieve specific things.
 
+## Kobra X status
+
+Some Kobra X firmware packages are publicly available and the SWU password has been recovered.
+
+At the same time, Anycubic switched from the K3 software base (GoKlipper) to a K4 software base using a C++ Klipper port. This makes Kobra X support a separate effort, not a direct extension of current Rinkhals ports.
+
+The SWU process also requires a trusted certificate to accept updates. Until that requirement can be bypassed in a reliable way, SWU-based firmware injection like Rinkhals is not currently possible on Kobra X.
+
 The main project is located on GitHub: [https://github.com/jbatonnet/Rinkhals](https://github.com/jbatonnet/Rinkhals)<br />
 To quickly start using Rinkhals, check the [quick start guide](guides/rinkhals-quick-start.md)
 
