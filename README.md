@@ -22,7 +22,7 @@ Here are the suported printers and firmwares with latest Rinkhals release:
 | -- | -- | -- |
 | Kobra 3 (+ combo) | `2.4.4.7` `2.4.5` |
 | Kobra 2 Pro | `3.1.2.3` `3.1.4` | Only with mainboard [Trigorilla Spe **B** v1.0.x](https://1coderookie.github.io/Kobra2ProInsights/hardware/mainboard/#trigorilla_spe_b_v10x-stock-new-revision). `3.1.4` seems to be buggy for some people |
-| Kobra S1 (+ combo) | `2.5.8.8` `2.5.9.9` `2.6.0.0` |
+| Kobra S1 (+ combo) | `2.5.8.8` `2.5.9.9` `2.6.0.0` `2.7.0.9`|
 | Kobra 3 Max (+ combo) | `2.5.1.3` `2.5.1.7` |
 | Kobra 3 V2 (+ combo) | `1.1.0.1` `1.1.0.4` |
 | Kobra S1 Max (+ combo) | `2.1.6` |
@@ -42,7 +42,7 @@ Since people have been asking, I accept donations but please remember that I wor
 ## Rinkhals installation
 
 > [!WARNING]
-> **Make sure you're confident tweaking your printer and you understand what you're doing. I'm not responsible if you brick your printer (even if there's some [documentation](https://jbatonnet.github.io/Rinkhals/Kobra%20Printers/recover-boot-issues/) about that)**
+> **Make sure you're confident tweaking your printer and you understand what you're doing. I'm not responsible if you brick your printer (even if there's some [documentation](https://jbatonnet.github.io/Rinkhals/printers/recover-boot-issues/)) about that)**
 
 > [!CAUTION]
 > Many users want to change their Klipper printer configuration (the printer.cfg file). I strongly advise not modifying the stock printer configuration. Rinkhals offers additional protection you don't have while modifying directly your printer configuration. **I won't offer any support** and **your printer might not work properly or not boot anymore**. Check the documentation for more information: [Printer configuration](https://jbatonnet.github.io/Rinkhals/Rinkhals/printer-configuration/)
@@ -122,6 +122,11 @@ If you want to help Rinkhals and contribute, whether it's code, documentation or
 </a>
 <br /><br />
 
+Current maintainers:
+- **jbatonnet**
+- **martinbogo**
+- **Antitriad**
+  
 Special thanks to those people for providing the base research and helping support for more printers:
 - **utkabobr** (https://github.com/utkabobr/DuckPro-Kobra3)
 - **systemik** (https://github.com/systemik/Kobra3-Firmware)
