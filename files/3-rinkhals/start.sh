@@ -315,7 +315,12 @@ for APP in $APPS; do
         continue
     fi
 
-    APP_SCHEMA_VERSION=$(cat $APP_ROOT/app.json | sed 's/\/\/.*$//' | jq -r '.["$version"]')
+    APP_SCHEMA_VERSION=$(jq -r '.["$version"]' $APP_ROOT/app.json 2> /dev/null)
+
+    if [ "$APP_SCHEMA_VERSION" = "" ] || [ "$APP_SCHEMA_VERSION" = "null" ]; then
+        APP_SCHEMA_VERSION=$(sed '/^[[:space:]]*\/\//d' $APP_ROOT/app.json | jq -r '.["$version"]' 2> /dev/null)
+    fi
+
     if [ "$APP_SCHEMA_VERSION" != "1" ]; then
         log "  - Skipped $APP ($APP_ROOT) as it is not compatible with this version of Rinkhals"
         continue
