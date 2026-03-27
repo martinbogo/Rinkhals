@@ -68,6 +68,7 @@ is_supported_firmware() {
     [ "$KOBRA_MODEL_CODE" = "K3M" ] && [ "$KOBRA_VERSION" = "2.5.1.7" ] && SUPPORTED=1
     [ "$KOBRA_MODEL_CODE" = "K3M" ] && [ "$KOBRA_VERSION" = "2.5.1.3" ] && SUPPORTED=1
     [ "$KOBRA_MODEL_CODE" = "K3" ] && [ "$KOBRA_VERSION" = "2.4.6.4" ] && SUPPORTED=1
+    [ "$KOBRA_MODEL_CODE" = "K3" ] && [ "$KOBRA_VERSION" = "2.4.6.7" ] && SUPPORTED=1
     [ "$KOBRA_MODEL_CODE" = "K3" ] && [ "$KOBRA_VERSION" = "2.4.5" ] && SUPPORTED=1
     [ "$KOBRA_MODEL_CODE" = "K3" ] && [ "$KOBRA_VERSION" = "2.4.4.7" ] && SUPPORTED=1
     [ "$KOBRA_MODEL_CODE" = "K2P" ] && [ "$KOBRA_VERSION" = "3.1.4" ] && SUPPORTED=1

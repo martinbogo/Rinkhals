@@ -157,6 +157,12 @@ def patch_K3SysUi(binaryPath, modelCode, version):
         buttonCallback = k3sysui.symbols['_ZZN10MainWindow19AcSettingPageUiInitEvENKUlvE_clEv']
         patchJumpAddress = 0x1076c4
         patchReturnAddress = 0x1076f4
+    elif modelCode == 'K3' and version == '2.4.6.7':
+        buttonCallback = k3sysui.symbols['_ZZN10MainWindow19AcSettingPageUiInitEvENKUlvE_clEv']
+        # case 4 body starts at 0x1076ec, and the switch break target is 0x10772c.
+        # Returning to the epilog avoids accidental fall-through into adjacent case code.
+        patchJumpAddress = 0x1076ec
+        patchReturnAddress = 0x10772c
 
     # KS1 - Settings > General > Service Support (4th button)
     
