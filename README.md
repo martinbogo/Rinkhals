@@ -135,7 +135,7 @@ If you want to help Rinkhals and contribute, whether it's code, documentation or
 Current maintainers:
 - **jbatonnet**
 - **martinbogo**
-- **Antitriad**
+- **antirad**
   
 Special thanks to those people for providing the base research and helping support for more printers:
 - **utkabobr** (https://github.com/utkabobr/DuckPro-Kobra3)
