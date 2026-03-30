@@ -1250,7 +1250,7 @@ class MmuAceController:
             vendor = "Anycubic",
             version = "1.0",
             num_gates = len(unit.gates),
-            first_gate = 0,
+            first_gate = sum(len(u.gates) for u in self.ace.units[:index]),
             selector_type = "VirtualSelector",
             variable_rotation_distances = False,
             variable_bowden_lengths = False,
@@ -1700,10 +1700,11 @@ class MmuAcePatcher:
             return None
 
         # Determine local gate index (GoKlipper's FEED_FILAMENT uses INDEX 0-3, not global gate)
+        ace_id = gate // 4
         local_index = gate % 4
 
         # Build G-code command for GoKlipper
-        gcode = f"FEED_FILAMENT INDEX={local_index} LENGTH={int(length)} SPEED={int(speed)}"
+        gcode = f"FEED_FILAMENT ID={ace_id} INDEX={local_index} LENGTH={int(length)} SPEED={int(speed)}"
 
         try:
             # Send directly to GoKlipper via G-code
@@ -1856,10 +1857,11 @@ class MmuAcePatcher:
             return None
 
         # Determine local gate index (GoKlipper's UNWIND_FILAMENT uses INDEX 0-3, not global gate)
+        ace_id = gate // 4
         local_index = gate % 4
 
         # Build G-code command for GoKlipper
-        gcode = f"UNWIND_FILAMENT INDEX={local_index} LENGTH={int(length)} SPEED={int(speed)}"
+        gcode = f"UNWIND_FILAMENT ID={ace_id} INDEX={local_index} LENGTH={int(length)} SPEED={int(speed)}"
 
         try:
             # Send directly to GoKlipper via G-code
@@ -1906,10 +1908,11 @@ class MmuAcePatcher:
             return None
 
         # Determine local gate index (GoKlipper's UNWIND_FILAMENT uses INDEX 0-3, not global gate)
+        ace_id = gate // 4
         local_index = gate % 4
 
         # Build G-code command for GoKlipper (EJECT is just UNWIND with longer distance)
-        gcode = f"UNWIND_FILAMENT INDEX={local_index} LENGTH={int(length)} SPEED={int(speed)}"
+        gcode = f"UNWIND_FILAMENT ID={ace_id} INDEX={local_index} LENGTH={int(length)} SPEED={int(speed)}"
 
         try:
             # Send directly to GoKlipper via G-code
