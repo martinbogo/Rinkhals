@@ -572,7 +572,8 @@ class Kobra:
                 result = original_get_klippy_info(me)
                 if self.is_goklipper_running():
                     result['klipper_path'] = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
-                    logging.info('[Kobra] Injected klipper_path')
+                    result['config_file'] = '/userdata/app/gk/printer_data/config/printer.generated.cfg'
+                    logging.info('[Kobra] Injected klipper_path and config_file')
                 return result
             return get_klippy_info
 
@@ -962,7 +963,8 @@ class Kobra:
                 if self.is_goklipper_running():
                     result['klipper_path'] = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
                     result['python_path'] = ''
-                    logging.info('[Kobra] Injected missing paths')
+                    result['config_file'] = '/userdata/app/gk/printer_data/config/printer.generated.cfg'
+                    logging.info('[Kobra] Injected missing paths and config_file')
                 return result
             return get_klippy_info
 

@@ -828,7 +828,7 @@ class MmuAceController:
             self._disable_ace("filament_hub config not present in query response")
             return
 
-        logging.debug(f"mmu ace config: {json.dumps(result)}")
+        logging.debug(f"mmu ace config: {result}")
 
     async def _subscribe_mmu_ace_status_update(self):
         if not self.ace.enabled:
@@ -846,7 +846,7 @@ class MmuAceController:
             self._disable_ace("filament_hub missing from subscription response")
             return
 
-        logging.debug(f"mmu ace status subscribe: {json.dumps(result)}")
+        logging.debug(f"mmu ace status subscribe: {result}")
 
         filament_hub = result["filament_hub"]
 
@@ -887,7 +887,7 @@ class MmuAceController:
     async def _handle_mmu_ace_status_update(self, status: Dict[str, Any], _: float):
         if "filament_hub" in status:
             filament_hub = status["filament_hub"]
-            logging.debug(f"mmu ace status update: {json.dumps(filament_hub)}")
+            logging.debug(f"mmu ace status update: {filament_hub}")
 
             # Fetch temperature info for all gates with material
             # Collect all temperature fetch tasks for parallel execution
