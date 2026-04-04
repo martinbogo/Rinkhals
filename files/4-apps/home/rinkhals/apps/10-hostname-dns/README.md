@@ -10,6 +10,13 @@ Sets a custom hostname for your printer and advertises it on the local network v
 
 Both mDNS and DHCP propagation are enabled by default.
 
+## Settings
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| Hostname | *(auto-generated)* | Custom hostname for the printer |
+| Send hostname via DHCP | True | Restarts `udhcpc` with the hostname so the router registers it for short-name resolution |
+
 ## Default Hostname
 
 When no custom hostname is configured, one is auto-generated from the printer model and device ID:
@@ -22,7 +29,7 @@ For example: `kobra-k3-a1b2`, `kobra-ks1-f3e9`
 
 This ensures each printer gets a unique name even without manual configuration.
 
-## Custom Hostname
+## Set Custom Hostname Or Disable DHCP Propagation
 
 To set a custom hostname, SSH into the printer and run:
 
@@ -31,27 +38,20 @@ source /useremain/rinkhals/.current/tools.sh
 set_app_property 10-hostname-dns hostname my-printer
 ```
 
-Then restart the app (or reboot the printer):
-
-```bash
-/useremain/home/rinkhals/apps/10-hostname-dns/app.sh stop
-/useremain/home/rinkhals/apps/10-hostname-dns/app.sh start
-```
-
 The hostname is sanitized automatically: converted to lowercase, invalid characters replaced with hyphens, and truncated to 63 characters (DNS limit).
-
-## Settings
-
-| Setting | Default | Description |
-|---------|---------|-------------|
-| Hostname | *(auto-generated)* | Custom hostname for the printer |
-| Send hostname via DHCP | True | Restarts `udhcpc` with the hostname so the router registers it for short-name resolution |
 
 DHCP propagation can be disabled via the Rinkhals UI toggle or via SSH:
 
 ```bash
 source /useremain/rinkhals/.current/tools.sh
 set_app_property 10-hostname-dns dhcp_hostname False
+```
+
+Then restart the app (or reboot the printer):
+
+```bash
+/useremain/home/rinkhals/apps/10-hostname-dns/app.sh stop
+/useremain/home/rinkhals/apps/10-hostname-dns/app.sh start
 ```
 
 ## Dependencies
