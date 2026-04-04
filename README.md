@@ -37,6 +37,8 @@ However, Anycubic moved from the K3 software base (GoKlipper) to a K4 software b
 
 In addition, the SWU update flow requires a trusted certificate for package acceptance. Until a reliable bypass is discovered, SWU-based firmware injection similar to Rinkhals is not currently feasible on Kobra X.
 
+## General Information
+
 In case you're wondering this project is named after rinkhals, a sub-species of Cobras ... Kobra ... Rinkhals 👏
 
 You can join the Rinkhals community on Discord: https://discord.gg/3mrANjpNJC
