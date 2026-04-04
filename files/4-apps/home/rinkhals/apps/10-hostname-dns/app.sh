@@ -58,12 +58,14 @@ start() {
     # Propagate hostname via DHCP if enabled
     DHCP_ENABLED=$(get_app_property $APP_NAME dhcp_hostname)
     if [ "$DHCP_ENABLED" = "True" ]; then
-        # Restart udhcpc with -H so the router registers the hostname
-        UDHCPC_PID=$(get_by_name udhcpc)
-        if [ -n "$UDHCPC_PID" ]; then
-            kill $UDHCPC_PID
-            udhcpc -i wlan0 -H "$HOSTNAME" -b &
-        fi
+        # Restart each udhcpc instance with -H so the router registers the hostname
+        for UDHCPC_PID in $(get_by_name udhcpc); do
+            UDHCPC_IFACE=$(cat /proc/$UDHCPC_PID/cmdline 2>/dev/null | tr '\0' '\n' | grep -A1 -- '^-i$' | tail -1)
+            if [ -n "$UDHCPC_IFACE" ]; then
+                kill $UDHCPC_PID
+                udhcpc -i "$UDHCPC_IFACE" -H "$HOSTNAME" -b &
+            fi
+        done
 
     fi
 

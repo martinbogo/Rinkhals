@@ -273,6 +273,7 @@ def main() -> None:
     )
 
     retries: int = 0
+    last_announce: float = 0.0
     while running:
         # Set up socket if needed (initial start or after error)
         if sock is None:
@@ -281,7 +282,7 @@ def main() -> None:
                 retries = 0
                 log.info("Socket ready, listening on port %d", MDNS_PORT)
                 announce(sock, target_name, target_encoded)
-                last_announce: float = time.monotonic()
+                last_announce = time.monotonic()
             except OSError as e:
                 retries += 1
                 if retries > MAX_RETRIES:
