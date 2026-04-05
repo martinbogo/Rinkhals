@@ -213,6 +213,13 @@ def patch_K3SysUi(binaryPath, modelCode, version):
         patchJumpAddress = 0x14efc0
         patchReturnAddress = 0x14efec
         s1CaseAlreadySelected = True
+    elif modelCode == 'KS1M' and version == '2.6.9.3':
+        buttonCallback = k3sysui.symbols['_ZZN10MainWindow21AcSettingDeviceUiInitEvENKUlRK11QModelIndexE0_clES2_']
+        # In 2.6.9.3 the Support entry now routes through a warning popup path.
+        # Hook that case directly to bypass the popup and open Rinkhals instead.
+        patchJumpAddress = 0x150b30
+        patchReturnAddress = 0x150bd4
+        s1CaseAlreadySelected = True
 
     else:
         raise Exception('Unsupported model and version')
