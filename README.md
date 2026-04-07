@@ -25,7 +25,7 @@ Here are the suported printers and firmwares with latest Rinkhals release:
 | Kobra S1 (+ combo) | `2.6.0.0` `2.7.0.9` |
 | Kobra 3 Max (+ combo) | `2.5.1.3` `2.5.1.7` |
 | Kobra 3 V2 (+ combo) | `1.1.0.1` `1.1.0.4` |
-| Kobra S1 Max (+ combo) | `2.1.6` |
+| Kobra S1 Max (+ combo) | `2.1.6` `2.6.6` |
 
 🔴 - in testing, not yet ready
 
@@ -36,6 +36,8 @@ Some Kobra X firmware packages are publicly available and the SWU password has a
 However, Anycubic moved from the K3 software base (GoKlipper) to a K4 software base using a C++ Klipper port. Because of this, Kobra X support is not expected to be a simple port of the current Rinkhals stack.
 
 In addition, the SWU update flow requires a trusted certificate for package acceptance. Until a reliable bypass is discovered, SWU-based firmware injection similar to Rinkhals is not currently feasible on Kobra X.
+
+## General Information
 
 In case you're wondering this project is named after rinkhals, a sub-species of Cobras ... Kobra ... Rinkhals 👏
 
