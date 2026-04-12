@@ -17,7 +17,7 @@ By using Rinkhals, you will keep all stock Anycubic features (print screen, Anyc
 - [Apps system](https://github.com/jbatonnet/Rinkhals.apps) (OctoEverywhere, Cloudflare, Tailscale, ...)
 
 Latest version will likely support the two latest firmwares from Anycubic, unless specified. For older firmware please check older releases.
-Here are the suported printers and firmwares with latest Rinkhals release:
+Here are the supported GoKlipper / K3-family printers and firmwares with the latest Rinkhals release:
 | Model  | Tested firmwares | Notes |
 | -- | -- | -- |
 | Kobra 3 (+ combo) | `2.4.4.7` `2.4.5` `2.4.6.7` |
@@ -28,6 +28,12 @@ Here are the suported printers and firmwares with latest Rinkhals release:
 | Kobra S1 Max (+ combo) | `2.1.6` `2.6.6` 🔴`2.6.9.3`🔴 |
 
 🔴 - in testing, not yet ready
+
+The K4-family currently has a separate status:
+
+| Model | Status | Notes |
+| -- | -- | -- |
+| Kobra X | Not supported | Uses the `KlipperC++` / K4 software base and is currently blocked by SWU RSA signature verification. See the [Kobra X documentation](https://jbatonnet.github.io/Rinkhals/printers/kobra-x/) for details. |
 
 ## Kobra X status
 
