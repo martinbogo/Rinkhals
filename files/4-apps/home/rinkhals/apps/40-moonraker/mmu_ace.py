@@ -1079,11 +1079,12 @@ class MmuAceController:
         # If MMU thinks filament is LOADED but ACE Hub says nothing loaded -> sync (reset)
         if self.ace.filament.pos == FILAMENT_POS_LOADED and (not current_filament or current_filament == ""):
             logging.info(f"_set_ace_status: MMU thinks loaded but ACE Hub current_filament is empty, resetting MMU status")
+            self.ace.loaded_gate = TOOL_GATE_UNKNOWN
             self.ace.gate = -1
             self.ace.tool = -1
             self.ace.filament.pos = FILAMENT_POS_UNLOADED
         # If ACE Hub says filament loaded but MMU doesn't know -> sync (set loaded)
-        elif current_filament and current_filament != "" and self.ace.filament.pos != FILAMENT_POS_LOADED:
+        elif current_filament and current_filament != "":
             # Parse current_filament (format: "unit_id-gate_index" like "0-1")
             try:
                 parts = current_filament.split("-")
@@ -1092,10 +1093,14 @@ class MmuAceController:
                     local_gate = int(parts[1])
                     # Calculate global gate index
                     global_gate = (unit_id * 4) + local_gate
-                    logging.info(f"_set_ace_status: ACE Hub current_filament='{current_filament}', setting MMU gate={global_gate}")
-                    self.ace.gate = global_gate
-                    self.ace.tool = global_gate  # Tool = Gate for ACE
-                    self.ace.filament.pos = FILAMENT_POS_LOADED
+                    previous_loaded_gate = self.ace.loaded_gate
+                    self.ace.loaded_gate = global_gate
+
+                    if self.ace.filament.pos != FILAMENT_POS_LOADED or self.ace.gate in [TOOL_GATE_UNKNOWN, previous_loaded_gate]:
+                        logging.info(f"_set_ace_status: ACE Hub current_filament='{current_filament}', setting MMU gate={global_gate}")
+                        self.ace.gate = global_gate
+                        self.ace.tool = global_gate  # Tool = Gate for ACE
+                        self.ace.filament.pos = FILAMENT_POS_LOADED
             except Exception as e:
                 logging.error(f"_set_ace_status: Failed to parse current_filament '{current_filament}': {e}")
         # Otherwise: MMU status and ACE Hub agree, or MMU is in selection state (gate >= 0 but not loaded) - don't interfere
@@ -1988,7 +1993,20 @@ class MmuAcePatcher:
         return None  # Don't execute original command
 
     async def _on_gcode_mmu_recover(self, args: dict[str, str | None], delegate):
-        """Recover MMU state - refresh ACE status and RFID data"""
+        """Recover MMU state by refreshing ACE status and RFID data."""
+
+        if args:
+            unsupported = ", ".join(
+                f"{key}={value}" if value is not None else key
+                for key, value in sorted(args.items())
+            )
+            message = (
+                f"MMU_RECOVER: unsupported parameters ({unsupported}). "
+                "This command only refreshes ACE status. Use MMU_SELECT, MMU_LOAD, or MMU_UNLOAD for manual changes."
+            )
+            logging.error(message)
+            await self._send_gcode_response(message)
+            return None
 
         # Trigger full status update to refresh all ACE data
         self.ace_controller._handle_status_update(force=True)
