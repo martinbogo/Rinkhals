@@ -156,6 +156,81 @@ class MmuAceControllerSyncTests(unittest.TestCase):
         self.assertTrue(status.mmu.active_filament.empty)
 
 
+class MmuAcePartialUpdateTests(unittest.IsolatedAsyncioTestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.module = load_mmu_ace_module()
+
+    def setUp(self):
+        self.original_create_task = self.module.asyncio.create_task
+        self.module.asyncio.create_task = lambda coro: DummyTask(coro)
+        self.server = DummyServer()
+        self.controller = self.module.MmuAceController(self.server, host=None)
+        self.controller.ace = self.module.MmuAce()
+        self.status_updates = []
+        self.controller._handle_status_update = lambda *args, **kwargs: self.status_updates.append(kwargs)
+
+    def tearDown(self):
+        self.module.asyncio.create_task = self.original_create_task
+
+    async def test_partial_current_filament_update_syncs_loaded_state(self):
+        await self.controller._handle_mmu_ace_status_update(
+            {"filament_hub": {"current_filament": "0-0"}},
+            0.0,
+        )
+
+        self.assertEqual(self.controller.ace.loaded_gate, 0)
+        self.assertEqual(self.controller.ace.gate, 0)
+        self.assertEqual(self.controller.ace.tool, 0)
+        self.assertEqual(self.controller.ace.filament.pos, self.module.FILAMENT_POS_LOADED)
+        self.assertEqual(self.status_updates, [{"force": True}])
+
+    async def test_partial_empty_current_filament_clears_loaded_state(self):
+        self.controller.ace.loaded_gate = 1
+        self.controller.ace.gate = 1
+        self.controller.ace.tool = 1
+        self.controller.ace.filament.pos = self.module.FILAMENT_POS_LOADED
+
+        await self.controller._handle_mmu_ace_status_update(
+            {"filament_hub": {"current_filament": ""}},
+            0.0,
+        )
+
+        self.assertEqual(self.controller.ace.loaded_gate, self.module.TOOL_GATE_UNKNOWN)
+        self.assertEqual(self.controller.ace.gate, self.module.TOOL_GATE_UNKNOWN)
+        self.assertEqual(self.controller.ace.tool, self.module.TOOL_GATE_UNKNOWN)
+        self.assertEqual(self.controller.ace.filament.pos, self.module.FILAMENT_POS_UNLOADED)
+        self.assertEqual(self.status_updates, [{"force": True}])
+
+    async def test_partial_empty_current_filament_preserves_unloaded_selection(self):
+        self.controller.ace.loaded_gate = self.module.TOOL_GATE_UNKNOWN
+        self.controller.ace.gate = 2
+        self.controller.ace.tool = 2
+        self.controller.ace.filament.pos = self.module.FILAMENT_POS_UNLOADED
+
+        await self.controller._handle_mmu_ace_status_update(
+            {"filament_hub": {"current_filament": ""}},
+            0.0,
+        )
+
+        self.assertEqual(self.controller.ace.loaded_gate, self.module.TOOL_GATE_UNKNOWN)
+        self.assertEqual(self.controller.ace.gate, 2)
+        self.assertEqual(self.controller.ace.tool, 2)
+        self.assertEqual(self.controller.ace.filament.pos, self.module.FILAMENT_POS_UNLOADED)
+        self.assertEqual(self.status_updates, [{"force": True}])
+
+    async def test_partial_update_without_current_filament_is_ignored(self):
+        await self.controller._handle_mmu_ace_status_update(
+            {"filament_hub": {"filament_present": 1}},
+            0.0,
+        )
+
+        self.assertEqual(self.controller.ace.loaded_gate, self.module.TOOL_GATE_UNKNOWN)
+        self.assertEqual(self.controller.ace.gate, self.module.TOOL_GATE_UNKNOWN)
+        self.assertEqual(self.controller.ace.tool, self.module.TOOL_GATE_UNKNOWN)
+        self.assertEqual(self.status_updates, [])
+
+
 class MmuRecoverTests(unittest.IsolatedAsyncioTestCase):
     @classmethod
     def setUpClass(cls):
