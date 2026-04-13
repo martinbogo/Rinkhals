@@ -148,6 +148,7 @@ class Kobra:
         self.patch_status_updates()
         self.patch_gcode_handler()
         self.patch_network_interfaces()
+        self.patch_machine_power_actions()
         self.patch_spoolman()
         self.patch_simplyprint()
         self.patch_mqtt_print()
@@ -850,6 +851,56 @@ class Kobra:
         setattr(Machine, '_parse_network_interfaces', _parse_network_interfaces)
         logging.debug(f'  After: {Machine._parse_network_interfaces}')
 
+    async def _run_native_machine_reboot(self):
+        await asyncio.sleep(0.1)
+
+        try:
+            subprocess.Popen(
+                ['sh', '-c', 'sync && /sbin/reboot'],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        except Exception:
+            logging.exception('[Kobra] Failed to launch native host reboot')
+
+    def _schedule_native_machine_reboot(self):
+        logging.info('[Kobra] Scheduling native host reboot')
+        self.server.get_event_loop().create_task(self._run_native_machine_reboot())
+
+    def patch_machine_power_actions(self):
+        from .machine import Machine
+
+        def wrap__handle_machine_request(original__handle_machine_request):
+            async def _handle_machine_request(me, web_request):
+                ep = web_request.get_endpoint()
+
+                if ep == "/machine/reboot":
+                    if me.inside_container:
+                        virt_id = me.system_info.get('virtualization', {}).get(
+                            'virt_identifier', 'none'
+                        )
+                        raise me.server.error(
+                            f"Cannot {ep.split('/')[-1]} from within a {virt_id} container"
+                        )
+
+                    logging.info('[Kobra] Intercepting machine reboot request')
+                    self._schedule_native_machine_reboot()
+                    return "ok"
+
+                return await original__handle_machine_request(me, web_request)
+
+            return _handle_machine_request
+
+        logging.info('> Patching machine reboot handling...')
+
+        logging.debug(f'  Before: {Machine._handle_machine_request}')
+        setattr(
+            Machine,
+            '_handle_machine_request',
+            wrap__handle_machine_request(Machine._handle_machine_request)
+        )
+        logging.debug(f'  After: {Machine._handle_machine_request}')
+
     def patch_spoolman(self):
         from .spoolman import SpoolManager
 
@@ -1127,7 +1178,7 @@ class Kobra:
 
                         web_request.get_args()["script"] = '\n'.join(calibrate_script)
                     elif script.lower().startswith('bed_mesh_profile'):
-                        name = re.search('save=(\"(?:[^\"]+)\"|(?:[^\s]+))', script.lower())
+                        name = re.search(r'save=("(?:[^"]+)"|(?:[^\s]+))', script.lower())
                         if name and name[1] != 'default':
                             message = 'GoKlipper only support one default bed mesh'
                             logging.error(message)
